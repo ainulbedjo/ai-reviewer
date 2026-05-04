@@ -24,13 +24,17 @@ For private repositories, create a Bitbucket access token at:
 
 ```bash
 # View diff and commits for a PR
-node index.js --pr https://bitbucket.org/workspace/repo/pull-requests/123
+> node index.js --pr https://bitbucket.org/workspace/repo/pull-requests/123
 
 # Get AI code review and post as PR comment
-node index.js --pr https://bitbucket.org/workspace/repo/pull-requests/123 --ai-review
+> node index.js --pr https://bitbucket.org/workspace/repo/pull-requests/123 --ai-review
 
 # Specify repo path (defaults to current directory)
-node index.js --pr <url> --repo /path/to/repo
+> node index.js --pr <url> --repo /path/to/
+
+# Or you could just run globally using npm link inside this project path
+> npm link
+> bb-review --pr https://bitbucket.org/workspace/repo/pull-requests/123 --ai-review
 ```
 
 ## How It Works
