@@ -1,0 +1,18 @@
+{
+  "name": "bb-code-review",
+  "version": "1.0.0",
+  "description": "CLI tool to checkout and compare Bitbucket PR branches",
+  "main": "index.js",
+  "bin": {
+    "bb-review": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
