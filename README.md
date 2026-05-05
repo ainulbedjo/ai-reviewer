@@ -34,7 +34,7 @@ node index.js --pr <url> --repo /path/to/repo
 
 # Or run globally after linking
 npm link
-bb-review --pr https://bitbucket.org/workspace/repo/pull-requests/123
+ai-reviewer --pr https://bitbucket.org/workspace/repo/pull-requests/123
 ```
 
 ## How It Works
