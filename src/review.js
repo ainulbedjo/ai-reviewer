@@ -1,11 +1,13 @@
+const fs = require('fs');
+const path = require('path');
 const { parseBitbucketUrl, fetchPrDetails, postPrComment } = require('./bitbucket');
 const { verifyRepo, fetchPrBranch, checkoutAndPull, getDiff, getCommits, deleteLocalBranch } = require('./git');
 const { generateReview } = require('./ollama');
-const { buildReviewPrompt } = require('./prompts');
+const { buildReviewPrompt, buildUpdatePrompt } = require('./prompts');
 const { config } = require('./config');
 const { ask } = require('./utils');
 
-async function runReview(prUrl, repoPath, aiReview = false) {
+async function runReview(prUrl, repoPath, aiReview = true) {
   const { workspace, repoSlug, prId } = parseBitbucketUrl(prUrl);
 
   console.log(`[INFO] PR: ${prUrl}`);
@@ -38,8 +40,20 @@ async function runReview(prUrl, repoPath, aiReview = false) {
 
   let review = null;
   if (aiReview) {
+    const commentPath = path.join(repoPath, 'comment.md');
+    let previousReview = null;
+    if (fs.existsSync(commentPath)) {
+      const content = fs.readFileSync(commentPath, 'utf-8');
+      if (content.trim()) {
+        previousReview = content;
+        console.log('[INFO] Found previous review in comment.md. Asking Ollama to update it...');
+      }
+    }
+
     console.log('\n[INFO] Sending diff to Ollama for AI review...');
-    const prompt = buildReviewPrompt(diffOutput, logOutput, targetBranch, localPrBranch);
+    const prompt = previousReview
+      ? buildUpdatePrompt(previousReview, diffOutput, logOutput, targetBranch, localPrBranch)
+      : buildReviewPrompt(diffOutput, logOutput, targetBranch, localPrBranch);
     review = await generateReview(config.ollama.host, config.ollama.model, prompt);
     console.log('\n========== AI REVIEW ==========\n');
     console.log(review);
@@ -50,7 +64,8 @@ async function runReview(prUrl, repoPath, aiReview = false) {
       await postPrComment(workspace, repoSlug, prId, review);
       console.log('[SUCCESS] Review posted as PR comment.');
     } else {
-      console.log('[INFO] Skipped posting review to PR.');
+      fs.writeFileSync(commentPath, review, 'utf-8');
+      console.log(`[INFO] Review saved to ${commentPath}.`);
     }
   }
 
