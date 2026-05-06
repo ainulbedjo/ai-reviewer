@@ -58,14 +58,14 @@ async function runReview(prUrl, repoPath, aiReview = true) {
     console.log('\n========== AI REVIEW ==========\n');
     console.log(review);
 
+    fs.writeFileSync(commentPath, review, 'utf-8');
+    console.log(`[INFO] Review saved to ${commentPath}.`);
+
     const answer = await ask('\nPost this review as a PR comment? (y/n): ');
     if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
       console.log('[INFO] Posting review comment to Bitbucket PR...');
       await postPrComment(workspace, repoSlug, prId, review);
       console.log('[SUCCESS] Review posted as PR comment.');
-    } else {
-      fs.writeFileSync(commentPath, review, 'utf-8');
-      console.log(`[INFO] Review saved to ${commentPath}.`);
     }
   }
 
