@@ -4,7 +4,7 @@
   "description": "CLI tool to checkout and compare Bitbucket PR branches",
   "main": "index.js",
   "bin": {
-    "bb-review": "./index.js"
+    "ai-review": "./index.js"
   },
   "scripts": {
     "start": "node index.js"

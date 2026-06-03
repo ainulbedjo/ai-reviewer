@@ -4,8 +4,8 @@ const { parseArgs } = require('./src/args');
 const { runReview } = require('./src/review');
 
 async function main() {
-  const { prUrl, repoPath, aiReview } = parseArgs();
-  await runReview(prUrl, repoPath, aiReview);
+  const { prUrl, repoPath, aiReview, provider } = parseArgs();
+  await runReview(prUrl, repoPath, aiReview, provider);
 }
 
 main().catch((err) => {

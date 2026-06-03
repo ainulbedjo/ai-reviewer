@@ -6,7 +6,7 @@ Copy and use this template for your code reviews.
 
 ## Summary
 
-[Brief overview of what was reviewed - 1-2 sentences]
+[Brief overview of what was reviewed - 1 sentences]
 
 **PR Size:** [Small/Medium/Large] (~X lines)
 **Review Time:** [X minutes]

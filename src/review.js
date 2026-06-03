@@ -2,12 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { parseBitbucketUrl, fetchPrDetails, postPrComment } = require('./bitbucket');
 const { verifyRepo, fetchPrBranch, checkoutAndPull, getDiff, getCommits, deleteLocalBranch } = require('./git');
-const { generateReview } = require('./ollama');
+const { getProvider } = require('./providers');
 const { buildReviewPrompt, buildUpdatePrompt } = require('./prompts');
-const { config } = require('./config');
 const { ask } = require('./utils');
 
-async function runReview(prUrl, repoPath, aiReview = true) {
+async function runReview(prUrl, repoPath, aiReview = true, provider) {
   const { workspace, repoSlug, prId } = parseBitbucketUrl(prUrl);
 
   console.log(`[INFO] PR: ${prUrl}`);
@@ -40,21 +39,22 @@ async function runReview(prUrl, repoPath, aiReview = true) {
 
   let review = null;
   if (aiReview) {
+    const ai = getProvider(provider);
     const commentPath = path.join(repoPath, 'comment.md');
     let previousReview = null;
     if (fs.existsSync(commentPath)) {
       const content = fs.readFileSync(commentPath, 'utf-8');
       if (content.trim()) {
         previousReview = content;
-        console.log('[INFO] Found previous review in comment.md. Asking Ollama to update it...');
+        console.log(`[INFO] Found previous review in comment.md. Asking ${ai.name} to update it...`);
       }
     }
 
-    console.log('\n[INFO] Sending diff to Ollama for AI review...');
+    console.log(`\n[INFO] Sending diff to ${ai.name} for AI review...`);
     const prompt = previousReview
       ? buildUpdatePrompt(previousReview, diffOutput, logOutput, targetBranch, localPrBranch)
       : buildReviewPrompt(diffOutput, logOutput, targetBranch, localPrBranch);
-    review = await generateReview(config.ollama.host, config.ollama.model, prompt);
+    review = await ai.generate(prompt);
     console.log('\n========== AI REVIEW ==========\n');
     console.log(review);
 

@@ -1,6 +1,6 @@
-# bb-review
+# ai-review
 
-CLI tool to checkout Bitbucket PR branches, compare diffs, and get AI-powered code reviews via local Ollama.
+CLI tool to checkout Bitbucket PR branches, compare diffs, and get AI-powered code reviews. Supports three AI providers: local **Ollama**, the **Claude cloud API**, and the local **Claude Code CLI**. Since this tool relies on git, this should run inside the project local path.
 
 ## Setup
 
@@ -13,12 +13,26 @@ Create a `.env` file (see `.env.example`):
 ```
 BITBUCKET_USERNAME=your-username
 BITBUCKET_API_TOKEN=your-api-token
+AI_PROVIDER=ollama            # ollama | claude-api | claude-cli
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=kimi-k2.6:cloud
+ANTHROPIC_API_KEY=            # required for claude-api
+ANTHROPIC_MODEL=claude-opus-4-8
+ANTHROPIC_MAX_TOKENS=4096
 ```
 
 For private repositories, create a Bitbucket access token at:
 `https://bitbucket.org/[workspace]/[repo]/admin/access-tokens`
+
+## AI providers
+
+There is **no Claude server on localhost** like Ollama's `:11434`. Pick a provider with `--provider` (or the `AI_PROVIDER` env var):
+
+| Provider | How it reaches Claude/AI | Auth | Cost |
+| --- | --- | --- | --- |
+| `ollama` (default) | Local Ollama HTTP server (`:11434`) | none | free, local |
+| `claude-api` | Anthropic cloud API (`api.anthropic.com`) | `ANTHROPIC_API_KEY` | paid per token |
+| `claude-cli` | Local `claude -p` subprocess | reuses your Claude Code login | per your plan |
 
 ## Usage
 
@@ -28,6 +42,10 @@ node index.js --pr https://bitbucket.org/workspace/repo/pull-requests/123
 
 # Skip AI review and only show diff/commits
 node index.js --pr <url> --no-ai-review
+
+# Choose the AI provider (default: ollama)
+node index.js --pr <url> --provider claude-api    # Claude cloud API (needs ANTHROPIC_API_KEY)
+node index.js --pr <url> --provider claude-cli    # local `claude` CLI (no API key)
 
 # Specify repo path (defaults to current directory)
 node index.js --pr <url> --repo /path/to/repo
@@ -43,15 +61,18 @@ ai-reviewer --pr https://bitbucket.org/workspace/repo/pull-requests/123
 2. Fetches the PR branch into a local `pr-{prId}` branch
 3. Checks out the target branch
 4. Displays diff and commit log between target and PR branch
-5. Sends diff + commits to Ollama for AI review (by default)
+5. Sends diff + commits to the selected AI provider for review (by default)
 6. Prompts to post the AI review as a PR comment; if declined, saves it to `comment.md` in the repo
-7. On the next run, reads existing `comment.md` and asks Ollama to update the review based on new changes
+7. On the next run, reads existing `comment.md` and asks the provider to update the review based on new changes
 8. Cleans up the local PR branch
 
 ## Requirements
 
 - Node.js >= 18.0.0
-- [Ollama](https://ollama.ai/) running locally (unless using `--no-ai-review`)
+- An AI provider (unless using `--no-ai-review`):
+  - `ollama`: [Ollama](https://ollama.ai/) running locally
+  - `claude-api`: an `ANTHROPIC_API_KEY`
+  - `claude-cli`: the [Claude Code](https://claude.com/claude-code) CLI on your PATH
 
 ## Demo
 
