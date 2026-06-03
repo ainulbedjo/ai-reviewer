@@ -14,9 +14,6 @@ A CLI tool that fetches Bitbucket PR details, compares branches, and optionally 
 # Run with a PR URL
 node index.js --pr https://bitbucket.org/workspace/repo/pull-requests/123
 
-# AI review is on by default; disable with --no-ai-review
-node index.js --pr <url> --no-ai-review
-
 # Choose the AI provider (default: ollama, or AI_PROVIDER env var)
 node index.js --pr <url> --provider claude-api    # Claude cloud API (needs ANTHROPIC_API_KEY)
 node index.js --pr <url> --provider claude-cli    # local `claude` CLI (no API key)
@@ -30,7 +27,7 @@ node index.js --pr <url> --repo /path/to/repo
 **Entry flow:** `index.js` → `src/args.js` (parse CLI) → `src/review.js` (orchestrate)
 
 **Main modules:**
-- `src/review.js` - Orchestrates the review workflow (fetch PR, checkout branches, get diff/commits, optionally run AI review)
+- `src/review.js` - Orchestrates the review workflow (fetch PR, checkout branches, get diff/commits, run AI review)
 - `src/bitbucket.js` - Bitbucket API client (fetch PR details, post comments). Wraps API calls with `ensureAuthenticated` from auth.js
 - `src/git.js` - Git operations via child_process spawn (verify repo, fetch/checkout branches, get diff, get commit log)
 - `src/providers/index.js` - `getProvider(name)` returns a `{ name, generate(prompt) }` object for the selected backend. `review.js` calls `ai.generate(prompt)` and stays provider-agnostic
@@ -40,7 +37,7 @@ node index.js --pr <url> --repo /path/to/repo
 - `src/auth.js` - On 401/403 errors, prompts for Bitbucket credentials and saves to `.env`
 - `src/prompts.js` - Builds the AI review prompt by embedding `skills/code-reviewer.md` template
 - `src/config.js` - Loads `.env` file, exports `config` object with bitbucket/provider/ollama/claude settings
-- `src/args.js` - Parses `--pr`, `--repo`, `--no-ai-review`, `--provider` flags
+- `src/args.js` - Parses `--pr`, `--repo`, `--provider` flags
 
 **Review workflow (review.js:runReview):**
 1. Parse PR URL for workspace, repo, prId
@@ -48,7 +45,7 @@ node index.js --pr <url> --repo /path/to/repo
 3. Fetch PR source branch into local `pr-{prId}` branch
 4. Checkout and pull target branch
 5. Get diff and commit log between target and PR branch
-6. If AI review is enabled: send diff+commits to the selected provider, prompt to post as PR comment
+6. Send diff+commits to the selected provider, prompt to post the review as a PR comment
 7. Delete local PR branch
 
 **Skill prompt:** `skills/code-reviewer.md` defines the code review output format (Strengths, Issues by severity, Recommendations, Assessment). This file is embedded into the review prompt by `prompts.js:buildReviewPrompt`.

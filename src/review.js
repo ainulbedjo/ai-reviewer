@@ -6,7 +6,7 @@ const { getProvider } = require('./providers');
 const { buildReviewPrompt, buildUpdatePrompt } = require('./prompts');
 const { ask } = require('./utils');
 
-async function runReview(prUrl, repoPath, aiReview = true, provider) {
+async function runReview(prUrl, repoPath, provider) {
   const { workspace, repoSlug, prId } = parseBitbucketUrl(prUrl);
 
   console.log(`[INFO] PR: ${prUrl}`);
@@ -37,36 +37,33 @@ async function runReview(prUrl, repoPath, aiReview = true, provider) {
   console.log(`\n========== COMMITS ==========\n`);
   console.log(logOutput || '(no commits)');
 
-  let review = null;
-  if (aiReview) {
-    const ai = getProvider(provider);
-    const commentPath = path.join(repoPath, 'comment.md');
-    let previousReview = null;
-    if (fs.existsSync(commentPath)) {
-      const content = fs.readFileSync(commentPath, 'utf-8');
-      if (content.trim()) {
-        previousReview = content;
-        console.log(`[INFO] Found previous review in comment.md. Asking ${ai.name} to update it...`);
-      }
+  const ai = getProvider(provider);
+  const commentPath = path.join(repoPath, 'comment.md');
+  let previousReview = null;
+  if (fs.existsSync(commentPath)) {
+    const content = fs.readFileSync(commentPath, 'utf-8');
+    if (content.trim()) {
+      previousReview = content;
+      console.log(`[INFO] Found previous review in comment.md. Asking ${ai.name} to update it...`);
     }
+  }
 
-    console.log(`\n[INFO] Sending diff to ${ai.name} for AI review...`);
-    const prompt = previousReview
-      ? buildUpdatePrompt(previousReview, diffOutput, logOutput, targetBranch, localPrBranch)
-      : buildReviewPrompt(diffOutput, logOutput, targetBranch, localPrBranch);
-    review = await ai.generate(prompt);
-    console.log('\n========== AI REVIEW ==========\n');
-    console.log(review);
+  console.log(`\n[INFO] Sending diff to ${ai.name} for AI review...`);
+  const prompt = previousReview
+    ? buildUpdatePrompt(previousReview, diffOutput, logOutput, targetBranch, localPrBranch)
+    : buildReviewPrompt(diffOutput, logOutput, targetBranch, localPrBranch);
+  const review = await ai.generate(prompt);
+  console.log('\n========== AI REVIEW ==========\n');
+  console.log(review);
 
-    fs.writeFileSync(commentPath, review, 'utf-8');
-    console.log(`[INFO] Review saved to ${commentPath}.`);
+  fs.writeFileSync(commentPath, review, 'utf-8');
+  console.log(`[INFO] Review saved to ${commentPath}.`);
 
-    const answer = await ask('\nPost this review as a PR comment? (y/n): ');
-    if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
-      console.log('[INFO] Posting review comment to Bitbucket PR...');
-      await postPrComment(workspace, repoSlug, prId, review);
-      console.log('[SUCCESS] Review posted as PR comment.');
-    }
+  const answer = await ask('\nPost this review as a PR comment? (y/n): ');
+  if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
+    console.log('[INFO] Posting review comment to Bitbucket PR...');
+    await postPrComment(workspace, repoSlug, prId, review);
+    console.log('[SUCCESS] Review posted as PR comment.');
   }
 
   console.log(`\n[INFO] Cleaning up local branch "${localPrBranch}"...`);

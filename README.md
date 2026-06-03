@@ -37,11 +37,8 @@ There is **no Claude server on localhost** like Ollama's `:11434`. Pick a provid
 ## Usage
 
 ```bash
-# Review a PR (diff + AI code review by default)
+# Review a PR (diff + AI code review)
 node index.js --pr https://bitbucket.org/workspace/repo/pull-requests/123
-
-# Skip AI review and only show diff/commits
-node index.js --pr <url> --no-ai-review
 
 # Choose the AI provider (default: ollama)
 node index.js --pr <url> --provider claude-api    # Claude cloud API (needs ANTHROPIC_API_KEY)
@@ -61,7 +58,7 @@ ai-reviewer --pr https://bitbucket.org/workspace/repo/pull-requests/123
 2. Fetches the PR branch into a local `pr-{prId}` branch
 3. Checks out the target branch
 4. Displays diff and commit log between target and PR branch
-5. Sends diff + commits to the selected AI provider for review (by default)
+5. Sends diff + commits to the selected AI provider for review
 6. Prompts to post the AI review as a PR comment; if declined, saves it to `comment.md` in the repo
 7. On the next run, reads existing `comment.md` and asks the provider to update the review based on new changes
 8. Cleans up the local PR branch
@@ -69,7 +66,7 @@ ai-reviewer --pr https://bitbucket.org/workspace/repo/pull-requests/123
 ## Requirements
 
 - Node.js >= 18.0.0
-- An AI provider (unless using `--no-ai-review`):
+- An AI provider:
   - `ollama`: [Ollama](https://ollama.ai/) running locally
   - `claude-api`: an `ANTHROPIC_API_KEY`
   - `claude-cli`: the [Claude Code](https://claude.com/claude-code) CLI on your PATH
